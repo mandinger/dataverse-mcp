@@ -245,6 +245,19 @@ Register an app in Azure Portal for your Dataverse MCP Server:
 7. Copy the **Application (client) ID** into your `.env` as `CLIENT_ID`
 8. Set `TENANT_ID` to your specific tenant ID for tighter security (avoids `common`)
 
+### Allow the app in Power Platform admin center
+
+If your environment has MCP client restrictions enabled, you must also register your app's
+client ID as an allowed MCP client. Without this step the Dataverse API will reject requests
+from your custom app registration.
+
+1. Go to [Power Platform admin center](https://admin.powerplatform.microsoft.com/) → **Manage → Environments**
+2. Select your environment → **Settings → Product → Features**
+3. Confirm **Allow MCP clients to interact with Dataverse MCP server** is turned on
+4. Select **Advanced Settings** and add your app's **Application (client) ID** as an allowed client
+
+See [Configure the Dataverse MCP server](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-mcp-disable) for full admin center instructions.
+
 ---
 
 ## Behind a Reverse Proxy (HTTPS)
