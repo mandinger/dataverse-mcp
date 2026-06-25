@@ -9,6 +9,8 @@ services:
       - TENANT_ID=${TENANT_ID:-common}
       # Required: Azure AD Application (client) ID from your Entra ID app registration
       - CLIENT_ID=${CLIENT_ID}
+      # Optional: full redirect URI registered in Azure AD (e.g. https://yourdomain.com for reverse proxy)
+      - AUTH_REDIRECT_URI=${AUTH_REDIRECT_URI:-http://localhost:5577}
       # Optional: fixed port for interactive auth redirect server (must match published port below)
       - AUTH_REDIRECT_PORT=${AUTH_REDIRECT_PORT:-5577}
     ports:
