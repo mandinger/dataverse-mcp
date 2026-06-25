@@ -143,10 +143,21 @@ def start_interactive_auth() -> str:
         def do_GET(self):
             parsed = urlparse(self.path)
             params = parse_qs(parsed.query)
-            # Flatten query params to single values for MSAL
             auth_response = {k: v[0] for k, v in params.items()}
 
-            result = app.acquire_token_by_auth_code_flow(flow, auth_response)
+            logger.info("Auth redirect received: path=%s keys=%s", self.path, list(auth_response.keys()))
+
+            if "code" not in auth_response:
+                logger.error("No 'code' in redirect — reverse proxy may be stripping query params. path=%s", self.path)
+                self._respond("Authentication failed: redirect arrived without query parameters. Check that your reverse proxy forwards query strings to the backend.")
+                return
+
+            try:
+                result = app.acquire_token_by_auth_code_flow(flow, auth_response)
+            except ValueError as e:
+                logger.error("Token exchange error: %s (path=%s)", e, self.path)
+                self._respond(f"Authentication failed: {e}")
+                return
 
             if "access_token" in result:
                 _save_cache()

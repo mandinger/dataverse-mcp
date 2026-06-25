@@ -188,7 +188,8 @@ This writes to `.claude/config.json` in the current directory instead.
 | `DATAVERSE_URL` | Yes | — | Your environment URL, e.g. `https://yourorg.crm4.dynamics.com` |
 | `CLIENT_ID` | Yes | — | Azure AD Application (client) ID from your Entra ID app registration |
 | `TENANT_ID` | No | `common` | Azure AD tenant ID — find it in Azure Portal → Microsoft Entra ID → Overview |
-| `AUTH_REDIRECT_PORT` | No | `5577` | Port for the interactive auth redirect server |
+| `AUTH_REDIRECT_URI` | No | `http://localhost:5577` | Full redirect URI registered in Azure AD. Behind a reverse proxy use your public domain, e.g. `https://yourdomain.com` |
+| `AUTH_REDIRECT_PORT` | No | `5577` | Port the local redirect server binds to inside the container — must match what the reverse proxy forwards to |
 
 ---
 
@@ -238,11 +239,58 @@ Register an app in Azure Portal for your Dataverse MCP Server:
 1. Go to **Azure Portal → Microsoft Entra ID → App registrations → New registration**
 2. Name it anything (e.g. "Dataverse MCP Server")
 3. Under **Authentication**, add platform **Mobile and desktop applications**
-4. Add redirect host: `http://localhost` (or your custom `AUTH_REDIRECT_HOST`)
-5. Add redirect Port: `5577` (or your custom `AUTH_REDIRECT_PORT`)
+4. Add redirect URI: `http://localhost:5577` — or your public domain if behind a reverse proxy (see [Behind a Reverse Proxy](#behind-a-reverse-proxy-https))
+5. Under **Authentication → Advanced settings**, set **Allow public client flows** to **Yes** — this is required; without it Azure AD rejects the token exchange with `AADSTS7000218`
 6. Under **API permissions**, add **Dynamics CRM → user_impersonation** (delegated)
 7. Copy the **Application (client) ID** into your `.env` as `CLIENT_ID`
 8. Set `TENANT_ID` to your specific tenant ID for tighter security (avoids `common`)
+
+---
+
+## Behind a Reverse Proxy (HTTPS)
+
+If Docker runs on a remote host or VM with a reverse proxy in front (e.g. Nginx Proxy Manager),
+Azure AD requires the redirect URI to be HTTPS. The auth redirect port is still used internally
+but the public-facing URI is just your domain.
+
+### 1. Set the redirect URI in `.env`
+
+```env
+AUTH_REDIRECT_URI=https://yourdomain.com
+AUTH_REDIRECT_PORT=5577
+```
+
+### 2. Register the redirect URI in Azure AD
+
+In your app registration under **Authentication → Mobile and desktop applications**, add
+`https://yourdomain.com` as a redirect URI (no port). This must match `AUTH_REDIRECT_URI` exactly.
+
+### 3. Configure the reverse proxy
+
+The proxy must forward requests to the container on port 5577 and must **not** strip query
+parameters from the redirect callback — Azure AD returns `code` and `state` as query params.
+
+**Nginx** — no trailing slash on `proxy_pass`:
+
+```nginx
+location / {
+    proxy_pass http://container_name:5577;   # no trailing slash
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+**Nginx Proxy Manager** — the default proxy host setup forwards query strings correctly.
+If you have custom nginx config in the Advanced tab, make sure any `rewrite` rules preserve
+`$args` (e.g. `rewrite ^/(.*)$ /$1?$args break;`).
+
+### How it works
+
+- Azure AD redirects the browser to `https://yourdomain.com?code=...&state=...`
+- The reverse proxy forwards the full request (including query params) to the container on port 5577
+- The container's local redirect server exchanges the code for a token
+- The browser shows "Authentication complete"
 
 ---
 
