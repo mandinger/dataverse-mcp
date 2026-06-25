@@ -238,10 +238,11 @@ Register an app in Azure Portal for your Dataverse MCP Server:
 1. Go to **Azure Portal → Microsoft Entra ID → App registrations → New registration**
 2. Name it anything (e.g. "Dataverse MCP Server")
 3. Under **Authentication**, add platform **Mobile and desktop applications**
-4. Add redirect URI: `http://localhost:5577` (or your custom `AUTH_REDIRECT_PORT`)
-5. Under **API permissions**, add **Dynamics CRM → user_impersonation** (delegated)
-6. Copy the **Application (client) ID** into your `.env` as `CLIENT_ID`
-7. Set `TENANT_ID` to your specific tenant ID for tighter security (avoids `common`)
+4. Add redirect host: `http://localhost` (or your custom `AUTH_REDIRECT_HOST`)
+5. Add redirect Port: `5577` (or your custom `AUTH_REDIRECT_PORT`)
+6. Under **API permissions**, add **Dynamics CRM → user_impersonation** (delegated)
+7. Copy the **Application (client) ID** into your `.env` as `CLIENT_ID`
+8. Set `TENANT_ID` to your specific tenant ID for tighter security (avoids `common`)
 
 ---
 

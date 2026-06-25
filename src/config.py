@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # Optional with defaults
     tenant_id: str = "common"
     auth_redirect_port: int = 5577  # Fixed port for interactive auth redirect server
+    auth_redirect_host: str = "http://localhost"  # Fixed port for interactive auth redirect server
 
     # Internal constant — not configurable via env
     token_cache_path: str = "/data/token_cache.json"

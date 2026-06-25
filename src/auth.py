@@ -129,7 +129,8 @@ def start_interactive_auth() -> str:
 
     app = _get_app()
     port = settings.auth_redirect_port
-    redirect_uri = f"http://localhost:{port}"
+    host = settings.auth_redirect_host
+    redirect_uri = f"{host}:{port}"
 
     flow = app.initiate_auth_code_flow(
         scopes=settings.scopes,
